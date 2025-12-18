@@ -19,18 +19,24 @@ const SYSTEM_INSTRUCTION_SOLVER = `${TEXTBOOK_CONTEXT}
 3. 【详细解析】：展示推导过程，注意单位换算。`;
 
 /**
- * 初始化 AI 实例
- * 始终尝试使用 process.env.API_KEY
+ * 灵活初始化 AI 实例
+ * 适配第三方代理平台：支持通过 process.env.BASE_URL 修改 API 终点
  */
 const getAIInstance = () => {
   const apiKey = process.env.API_KEY;
+  // @ts-ignore - 允许通过环境变量注入 Base URL 以适配第三方中转站
+  const baseUrl = process.env.BASE_URL;
 
   if (!apiKey || apiKey.trim() === "") {
-    throw new Error("API_KEY 环境变量未设置。请确保您的部署环境已正确配置该变量。");
+    throw new Error("API_KEY 未配置。请在环境设置中填入您的密钥。");
   }
 
-  // 移除了对 sk- 的拦截，直接信任用户提供的密钥
-  return new GoogleGenAI({ apiKey });
+  // 初始化时传入配置，兼容第三方代理
+  return new GoogleGenAI({ 
+    apiKey,
+    // 如果存在自定义基地址，则使用它（某些 SDK 版本支持此项配置）
+    ...(baseUrl ? { baseUrl } : {})
+  });
 };
 
 export const createSummarizerChat = () => {
@@ -41,6 +47,7 @@ export const createSummarizerChat = () => {
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_SUMMARIZER,
         temperature: 0.3,
+        // 预设思考配置
         thinkingConfig: { thinkingBudget: 8192 }
       }
     });
@@ -51,23 +58,24 @@ export const createSummarizerChat = () => {
 };
 
 export const solveProblem = async (file: FileData | null, questionText: string): Promise<string> => {
-  try {
-    const ai = getAIInstance();
-    const parts: any[] = [];
-    
-    if (file) {
-      parts.push({ 
-        inlineData: { 
-          mimeType: file.mimeType, 
-          data: file.base64 
-        } 
-      });
-    }
-    
+  const ai = getAIInstance();
+  const parts: any[] = [];
+  
+  if (file) {
     parts.push({ 
-      text: questionText || "请分析这道化工原理题目并给出详细解答。" 
+      inlineData: { 
+        mimeType: file.mimeType, 
+        data: file.base64 
+      } 
     });
+  }
+  
+  parts.push({ 
+    text: questionText || "请分析这道化工原理题目并给出详细解答。" 
+  });
 
+  // 尝试带思考配置的调用
+  try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: { parts },
@@ -77,18 +85,24 @@ export const solveProblem = async (file: FileData | null, questionText: string):
         thinkingConfig: { thinkingBudget: 16384 }
       }
     });
-
-    if (!response.text) {
-      throw new Error("API 返回了空响应，请检查模型可用性。");
-    }
-
-    return response.text;
+    return response.text || "API 返回了空响应。";
   } catch (error: any) {
-    console.error("solveProblem Error:", error);
-    // 捕获并返回具体的 API 错误信息
-    const errorMsg = error.message || "未知错误";
-    if (errorMsg.includes("401")) return "⚠️ 认证失败：API Key 无效或已过期。";
-    if (errorMsg.includes("404")) return "⚠️ 模型未找到：请确认密钥拥有 gemini-3-pro-preview 的访问权限。";
-    return `❌ 运行出错：${errorMsg}`;
+    console.warn("带思考配置调用失败，尝试普通调用...", error.message);
+    
+    // 降级方案：如果第三方平台不支持 thinkingConfig，则进行普通调用
+    try {
+      const fallbackResponse = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: { parts },
+        config: { 
+          systemInstruction: SYSTEM_INSTRUCTION_SOLVER,
+          temperature: 0.2
+        }
+      });
+      return fallbackResponse.text || "API 返回了空响应。";
+    } catch (finalError: any) {
+      console.error("所有尝试均失败:", finalError);
+      return `❌ API 调用失败\n\n**错误详情**: ${finalError.message}\n\n**建议**: 如果您使用的是第三方中转 API，请确认该平台是否支持 'gemini-3-pro-preview' 模型名，并检查网络代理设置。`;
+    }
   }
 };
