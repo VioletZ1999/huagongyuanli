@@ -18,14 +18,22 @@ const SYSTEM_INSTRUCTION_SOLVER = `${TEXTBOOK_CONTEXT}
 2. 【核心知识点】：列出相关公式。
 3. 【详细解析】：展示推导过程，注意单位换算。`;
 
-// 安全获取 AI 实例的辅助函数
+/**
+ * 校验并获取 AI 实例
+ * 严格遵守安全性规范：从 process.env.API_KEY 获取密钥
+ */
 const getAIInstance = () => {
   const apiKey = process.env.API_KEY;
-  // SDK 抛出 "An API Key must be set" 报错是因为 apiKey 为空。
-  // 注意：用户提供的 sk-... 密钥是 OpenAI 格式，Gemini 必须使用 AIza... 格式的密钥。
+
   if (!apiKey || apiKey.trim() === "") {
-    throw new Error("检测到 API Key 未配置。请在部署平台（如 Vercel）的环境变量中添加 API_KEY。请确保使用的是 Google Gemini API Key（以 AIza 开头）。");
+    throw new Error("API Key 未配置。请在部署平台环境变量中设置 API_KEY。");
   }
+
+  // 特别校验：防止用户误填 OpenAI 的 sk- 密钥
+  if (apiKey.startsWith("sk-")) {
+    throw new Error("检测到 OpenAI 格式密钥 (sk-...)。本应用基于 Google Gemini 开发，请使用以 'AIza' 开头的 Gemini API Key。");
+  }
+
   return new GoogleGenAI({ apiKey });
 };
 
@@ -37,13 +45,11 @@ export const createSummarizerChat = () => {
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_SUMMARIZER,
         temperature: 0.3,
-        // 为资料整理启用基础思考能力
         thinkingConfig: { thinkingBudget: 8192 }
       }
     });
   } catch (error: any) {
     console.error("Chat Creation Error:", error);
-    // 抛出错误以便 UI 层捕获
     throw error;
   }
 };
@@ -72,7 +78,6 @@ export const solveProblem = async (file: FileData | null, questionText: string):
       config: { 
         systemInstruction: SYSTEM_INSTRUCTION_SOLVER,
         temperature: 0.2,
-        // 为化工计算启用更高额度的思考预算，以确保物理推导和单位换算的准确性
         thinkingConfig: { thinkingBudget: 16384 }
       }
     });
@@ -80,9 +85,9 @@ export const solveProblem = async (file: FileData | null, questionText: string):
     return response.text || "抱歉，无法生成解答。";
   } catch (error: any) {
     console.error("solveProblem Error:", error);
-    if (error.message.includes("API Key")) {
-      return `⚠️ 配置错误：${error.message}`;
-    }
+    // 向上层抛出更具体的错误信息
+    if (error.message.includes("OpenAI")) return `⚠️ 密钥格式错误：${error.message}`;
+    if (error.message.includes("API Key")) return `⚠️ 配置错误：${error.message}`;
     return `请求失败：${error.message || "未知错误"}`;
   }
 };
