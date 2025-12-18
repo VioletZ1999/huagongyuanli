@@ -1,0 +1,5 @@
+{
+  "name": "化工原理AI学习助手",
+  "description": "基于 Gemini 模型的化工原理智能学习助手，专注于流体力学、传热传质及分离工程等课程资料总结与习题解答。",
+  "requestFramePermissions": []
+}
