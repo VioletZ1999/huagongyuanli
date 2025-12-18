@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { FileData } from "../types";
 
@@ -32,10 +33,12 @@ export const createSummarizerChat = () => {
   try {
     const ai = getAIInstance();
     return ai.chats.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_SUMMARIZER,
         temperature: 0.3,
+        // 为资料整理启用基础思考能力
+        thinkingConfig: { thinkingBudget: 8192 }
       }
     });
   } catch (error: any) {
@@ -68,7 +71,9 @@ export const solveProblem = async (file: FileData | null, questionText: string):
       contents: { parts },
       config: { 
         systemInstruction: SYSTEM_INSTRUCTION_SOLVER,
-        temperature: 0.2 
+        temperature: 0.2,
+        // 为化工计算启用更高额度的思考预算，以确保物理推导和单位换算的准确性
+        thinkingConfig: { thinkingBudget: 16384 }
       }
     });
 
