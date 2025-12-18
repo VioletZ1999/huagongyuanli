@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppMode } from './types';
 import Summarizer from './components/Summarizer';
@@ -24,19 +23,11 @@ const ChemicalBackground = () => (
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.HOME);
-  const [isApiKeyReady, setIsApiKeyReady] = useState(false);
+  const [isApiKeyReady, setIsApiKeyReady] = useState(!!process.env.API_KEY);
 
   useEffect(() => {
     const checkKey = async () => {
-      // 只要环境变量中有值，即认为已准备就绪
-      const envKey = process.env.API_KEY;
-      if (envKey && envKey.trim().length > 0) {
-        setIsApiKeyReady(true);
-        return;
-      }
-
-      // 如果是 AI Studio 环境，检查是否已选择 Key
-      if (window.aistudio) {
+      if (window.aistudio && !process.env.API_KEY) {
         const hasKey = await window.aistudio.hasSelectedApiKey();
         setIsApiKeyReady(hasKey);
       }
@@ -47,7 +38,7 @@ const App: React.FC = () => {
   const handleOpenSelectKey = async () => {
     if (window.aistudio) {
       await window.aistudio.openSelectKey();
-      setIsApiKeyReady(true); 
+      setIsApiKeyReady(true); // 假设选择成功并继续
     }
   };
 
@@ -58,24 +49,20 @@ const App: React.FC = () => {
           掌握<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">化工原理</span>的核心奥秘
         </h1>
         <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          您的专业 AI 助教，已支持第三方 API 代理接入。
+          您的专属 AI 助教，专注于解决流体力学、传热传质及分离工程的学习难题。
         </p>
         
         {!isApiKeyReady && (
-          <div className="mt-8 p-6 bg-slate-100 border border-slate-200 rounded-2xl max-w-lg mx-auto shadow-sm">
-            <p className="text-slate-800 text-sm mb-4 font-semibold flex items-center justify-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              尚未检测到 API 密钥
-            </p>
-            <div className="text-xs text-slate-500 mb-6 bg-white/50 p-3 rounded-lg text-left">
-              请确保在环境变量中设置了 <code className="bg-slate-200 px-1 rounded">API_KEY</code>。如果是中转接口，建议同时设置 <code className="bg-slate-200 px-1 rounded">BASE_URL</code> 以指向正确的代理地址。
-            </div>
+          <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl max-w-md mx-auto">
+            <p className="text-amber-800 text-sm mb-4 font-medium">检测到 API 密钥未配置，请先授权以开启 AI 功能：</p>
             <button 
               onClick={handleOpenSelectKey}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 mx-auto"
+              className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold shadow-md hover:bg-amber-700 transition-all flex items-center justify-center gap-2 mx-auto"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               配置 API 密钥
             </button>
+            <p className="mt-4 text-[10px] text-amber-600">注意：请使用 Google Gemini 密钥 (AIza...)。详细指南请参考 <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline">计费文档</a>。</p>
           </div>
         )}
       </div>
@@ -83,30 +70,20 @@ const App: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-5xl mx-auto">
         <div 
           onClick={() => isApiKeyReady && setMode(AppMode.SUMMARIZER)}
-          className={`group relative bg-white rounded-3xl p-8 shadow-xl border border-slate-100 transition-all duration-300 ${isApiKeyReady ? 'cursor-pointer hover:-translate-y-2 hover:shadow-2xl' : 'opacity-60 grayscale cursor-not-allowed'}`}
+          className={`group relative bg-white rounded-3xl p-8 shadow-xl border border-slate-100 transition-all duration-300 ${isApiKeyReady ? 'cursor-pointer hover:-translate-y-2' : 'opacity-60 grayscale cursor-not-allowed'}`}
         >
-          <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          </div>
           <h2 className="text-2xl font-bold text-slate-800 mb-3">资料整理</h2>
-          <p className="text-slate-500 mb-6">上传 PDF 或课件，AI 自动提炼流体、传热、分离等章节的结构化笔记。</p>
-          <span className="text-indigo-600 font-semibold flex items-center gap-2">
-            进入功能 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </span>
+          <p className="text-slate-500 mb-6">上传课程资料，AI 自动梳理知识脉络。</p>
+          <span className="text-indigo-600 font-semibold">开始整理 →</span>
         </div>
 
         <div 
           onClick={() => isApiKeyReady && setMode(AppMode.SOLVER)}
-          className={`group relative bg-white rounded-3xl p-8 shadow-xl border border-slate-100 transition-all duration-300 ${isApiKeyReady ? 'cursor-pointer hover:-translate-y-2 hover:shadow-2xl' : 'opacity-60 grayscale cursor-not-allowed'}`}
+          className={`group relative bg-white rounded-3xl p-8 shadow-xl border border-slate-100 transition-all duration-300 ${isApiKeyReady ? 'cursor-pointer hover:-translate-y-2' : 'opacity-60 grayscale cursor-not-allowed'}`}
         >
-          <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          </div>
           <h2 className="text-2xl font-bold text-slate-800 mb-3">题目解答</h2>
-          <p className="text-slate-500 mb-6">专攻物料衡算与设备设计难题，通过深度思考模型输出详尽推导过程。</p>
-          <span className="text-blue-600 font-semibold flex items-center gap-2">
-            进入功能 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </span>
+          <p className="text-slate-500 mb-6">上传复杂题目，获取详细的工程推导步骤。</p>
+          <span className="text-blue-600 font-semibold">开始解答 →</span>
         </div>
       </div>
     </div>
@@ -118,16 +95,13 @@ const App: React.FC = () => {
       <nav className="border-b bg-white/70 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setMode(AppMode.HOME)}>
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">C</div>
-            <span className="font-bold text-xl hidden sm:inline">化工原理<span className="text-indigo-600"> AI</span>助教</span>
+            <span className="font-bold text-xl">化工原理<span className="text-indigo-600"> AI</span></span>
           </div>
           <div className="flex items-center gap-4">
             {mode !== AppMode.HOME && (
-              <button onClick={() => setMode(AppMode.HOME)} className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
-                返回首页
-              </button>
+              <button onClick={() => setMode(AppMode.HOME)} className="text-sm text-slate-500 hover:text-indigo-600">返回首页</button>
             )}
-            <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 font-bold">READY</span>
+            <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">Pro v1.0</span>
           </div>
         </div>
       </nav>
@@ -135,10 +109,8 @@ const App: React.FC = () => {
       <main className="pt-6 px-4 relative z-10">
         {mode === AppMode.HOME ? renderHome() : (
           <div className="max-w-7xl mx-auto">
-            <div className="mb-4 text-xs text-slate-400 flex items-center gap-2">
-              <span className="hover:text-indigo-600 cursor-pointer" onClick={() => setMode(AppMode.HOME)}>首页</span> 
-              <span>/</span>
-              <span className="text-slate-600 font-medium">{mode === AppMode.SUMMARIZER ? '资料整理' : '题目解答'}</span>
+            <div className="mb-4 text-xs text-slate-400">
+              <span className="cursor-pointer" onClick={() => setMode(AppMode.HOME)}>首页</span> / {mode === AppMode.SUMMARIZER ? '资料整理' : '题目解答'}
             </div>
             {mode === AppMode.SUMMARIZER ? <Summarizer /> : <Solver />}
           </div>
