@@ -8,13 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script>
-      // 关键：在应用加载前注入环境变量垫片
-      window.process = window.process || {};
-      window.process.env = window.process.env || {};
-      // 确保 API_KEY 即使在未配置时也是一个空字符串而非 undefined，以通过 SDK 的基础运行时检查
-      if (typeof window.process.env.API_KEY === 'undefined') {
-        window.process.env.API_KEY = '';
-      }
+      // 垫片：确保环境对象存在，但不主动覆盖已注入的 API_KEY
+      window.process = window.process || { env: {} };
     </script>
     <style>
       body {
