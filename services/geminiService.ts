@@ -83,7 +83,7 @@ ${TEXTBOOK_CONTEXT}
 
 // 创建一个专门用于资料整理的 Chat 会话
 export const createSummarizerChat = (): Chat => {
-  const modelId = 'gemini-2.5-flash';
+  const modelId = 'gemini-3-flash-preview';
   return ai.chats.create({
     model: modelId,
     config: {
@@ -94,10 +94,8 @@ export const createSummarizerChat = (): Chat => {
 };
 
 export const generateSummary = async (file: FileData, mode: 'default' | 'refine' | 'quiz' = 'default'): Promise<string> => {
-  // Keeping this for backward compatibility or simple one-off usage if needed, 
-  // but Summarizer component will now likely use chat directly.
   try {
-    const modelId = 'gemini-2.5-flash'; 
+    const modelId = 'gemini-3-flash-preview'; 
     const parts: any[] = [{ inlineData: { mimeType: file.mimeType, data: file.base64 } }];
 
     let prompt = "同学你好，请从化工原理专业的角度，提供这份材料的详细中文总结。";
@@ -124,7 +122,7 @@ export const generateSummary = async (file: FileData, mode: 'default' | 'refine'
 
 export const solveProblem = async (file: FileData | null, questionText: string): Promise<string> => {
   try {
-    const modelId = 'gemini-2.5-flash';
+    const modelId = 'gemini-3-pro-preview';
     const parts: any[] = [];
 
     if (file) {
