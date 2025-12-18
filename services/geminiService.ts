@@ -19,21 +19,17 @@ const SYSTEM_INSTRUCTION_SOLVER = `${TEXTBOOK_CONTEXT}
 3. 【详细解析】：展示推导过程，注意单位换算。`;
 
 /**
- * 校验并获取 AI 实例
- * 严格遵守安全性规范：从 process.env.API_KEY 获取密钥
+ * 初始化 AI 实例
+ * 始终尝试使用 process.env.API_KEY
  */
 const getAIInstance = () => {
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey.trim() === "") {
-    throw new Error("API Key 未配置。请在部署平台环境变量中设置 API_KEY。");
+    throw new Error("API_KEY 环境变量未设置。请确保您的部署环境已正确配置该变量。");
   }
 
-  // 特别校验：防止用户误填 OpenAI 的 sk- 密钥
-  if (apiKey.startsWith("sk-")) {
-    throw new Error("检测到 OpenAI 格式密钥 (sk-...)。本应用基于 Google Gemini 开发，请使用以 'AIza' 开头的 Gemini API Key。");
-  }
-
+  // 移除了对 sk- 的拦截，直接信任用户提供的密钥
   return new GoogleGenAI({ apiKey });
 };
 
@@ -82,12 +78,17 @@ export const solveProblem = async (file: FileData | null, questionText: string):
       }
     });
 
-    return response.text || "抱歉，无法生成解答。";
+    if (!response.text) {
+      throw new Error("API 返回了空响应，请检查模型可用性。");
+    }
+
+    return response.text;
   } catch (error: any) {
     console.error("solveProblem Error:", error);
-    // 向上层抛出更具体的错误信息
-    if (error.message.includes("OpenAI")) return `⚠️ 密钥格式错误：${error.message}`;
-    if (error.message.includes("API Key")) return `⚠️ 配置错误：${error.message}`;
-    return `请求失败：${error.message || "未知错误"}`;
+    // 捕获并返回具体的 API 错误信息
+    const errorMsg = error.message || "未知错误";
+    if (errorMsg.includes("401")) return "⚠️ 认证失败：API Key 无效或已过期。";
+    if (errorMsg.includes("404")) return "⚠️ 模型未找到：请确认密钥拥有 gemini-3-pro-preview 的访问权限。";
+    return `❌ 运行出错：${errorMsg}`;
   }
 };

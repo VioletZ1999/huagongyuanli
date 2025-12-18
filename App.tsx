@@ -28,13 +28,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKey = async () => {
-      // 如果 process.env.API_KEY 已经存在且不是 sk- 开头，则认为已就绪
+      // 只要 process.env.API_KEY 存在，无论什么开头都视为就绪
       const envKey = process.env.API_KEY;
-      if (envKey && !envKey.startsWith("sk-")) {
+      if (envKey && envKey.trim().length > 0) {
         setIsApiKeyReady(true);
         return;
       }
 
+      // 兜底检查 aistudio 注入
       if (window.aistudio) {
         const hasKey = await window.aistudio.hasSelectedApiKey();
         setIsApiKeyReady(hasKey);
@@ -57,29 +58,23 @@ const App: React.FC = () => {
           掌握<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">化工原理</span>的核心奥秘
         </h1>
         <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          您的专业 AI 助教，由 Gemini 3 Pro 强力驱动，支持深度逻辑推理。
+          您的专业 AI 助教，由 Gemini 3 Pro 强力驱动，已配置自定义 API 密钥。
         </p>
         
         {!isApiKeyReady && (
           <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl max-w-lg mx-auto shadow-sm">
             <p className="text-amber-800 text-sm mb-4 font-semibold flex items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              需要 Google Gemini API 密钥
+              等待 API 密钥配置
             </p>
-            <div className="text-xs text-amber-700 mb-6 space-y-2 text-left bg-white/50 p-3 rounded-lg">
-              <p>1. 本应用使用的是 <b>Google Gemini API</b>。</p>
-              <p>2. 请确保您的密钥格式为 <b>AIza...</b> (Google 格式)。</p>
-              <p className="text-red-600 font-bold">3. ⚠️ 请勿使用 OpenAI 的 sk-... 格式密钥，它们互不兼容。</p>
-            </div>
             <button 
               onClick={handleOpenSelectKey}
-              className="px-6 py-3 bg-amber-600 text-white rounded-xl font-bold shadow-md hover:bg-amber-700 transition-all flex items-center justify-center gap-2 mx-auto active:scale-95"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 mx-auto active:scale-95"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              点击配置 Google API 密钥
+              点击配置 API 密钥
             </button>
-            <p className="mt-4 text-[10px] text-amber-500">
-              若在本地开发，请在环境变量中设置 <code className="bg-amber-100 px-1 rounded">API_KEY</code>
+            <p className="mt-4 text-[10px] text-slate-500">
+              提示：若环境变量 <code className="bg-slate-200 px-1 rounded">API_KEY</code> 已生效，此页面将自动解锁。
             </p>
           </div>
         )}
@@ -94,9 +89,9 @@ const App: React.FC = () => {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-800 mb-3">资料整理</h2>
-          <p className="text-slate-500 mb-6">上传课程 PDF 或笔记图片，AI 导师将为您梳理结构化的知识思维导图与核心公式。</p>
+          <p className="text-slate-500 mb-6">利用 Gemini 3 Pro 深度分析 PDF 资料，自动生成结构化笔记与关键考点汇总。</p>
           <span className={`${isApiKeyReady ? 'text-indigo-600' : 'text-slate-400'} font-semibold flex items-center gap-2`}>
-            开始整理 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            进入功能 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </span>
         </div>
 
@@ -108,9 +103,9 @@ const App: React.FC = () => {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-800 mb-3">题目解答</h2>
-          <p className="text-slate-500 mb-6">拍摄化工计算题，利用 Gemini 3 Pro 的逻辑思考能力获取详尽的推导步骤与单位换算。</p>
+          <p className="text-slate-500 mb-6">集成思考模型，专攻化工计算难题，提供从原理推导到单位换算的闭环解答。</p>
           <span className={`${isApiKeyReady ? 'text-blue-600' : 'text-slate-400'} font-semibold flex items-center gap-2`}>
-            开始解答 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            进入功能 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </span>
         </div>
       </div>
@@ -132,11 +127,10 @@ const App: React.FC = () => {
                 onClick={() => setMode(AppMode.HOME)} 
                 className="text-sm font-medium text-slate-500 hover:text-indigo-600 flex items-center gap-1 transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 返回首页
               </button>
             )}
-            <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 font-bold uppercase tracking-wider">Gemini 3 Pro</span>
+            <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 font-bold">GEMINI 3 PRO</span>
           </div>
         </div>
       </nav>
@@ -145,8 +139,8 @@ const App: React.FC = () => {
         {mode === AppMode.HOME ? renderHome() : (
           <div className="max-w-7xl mx-auto">
             <div className="mb-4 text-xs text-slate-400 flex items-center gap-2">
-              <span className="hover:text-indigo-600 cursor-pointer transition-colors" onClick={() => setMode(AppMode.HOME)}>首页</span> 
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <span className="hover:text-indigo-600 cursor-pointer" onClick={() => setMode(AppMode.HOME)}>首页</span> 
+              <span>/</span>
               <span className="text-slate-600 font-medium">{mode === AppMode.SUMMARIZER ? '资料整理' : '题目解答'}</span>
             </div>
             {mode === AppMode.SUMMARIZER ? <Summarizer /> : <Solver />}
