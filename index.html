@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script>
-      // 关键修复：确保浏览器环境下 process.env 不会引起崩溃
+      // 垫片：防止浏览器环境报错导致 JS 停止执行
       window.process = window.process || { env: {} };
     </script>
     <style>
@@ -36,7 +36,6 @@
         50% { transform: translateY(-20px) rotate(5deg); }
       }
       .animate-float { animation: float 6s ease-in-out infinite; }
-      .animate-float-delayed { animation: float 8s ease-in-out infinite 2s; }
     </style>
     <script type="importmap">
     {
@@ -56,6 +55,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
